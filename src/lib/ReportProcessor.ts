@@ -138,20 +138,24 @@ export class ReportProcessor {
       this._writeAmount(this.total, "total");
     }
 
-    this._writeText(new Date().toLocaleDateString(), "date");
+    this._writeText(new Date().toJSON().slice(0,10).split("-").reverse().join("/"), "date");
 
     this.fileName = `TOB_2024_${getMonthIndex(this.months[0])}`;
+    this.reference = '';
+    const nationalNumber = storageGet("national-number");
+    if (nationalNumber) {
+      this.reference += `TOB - ${nationalNumber}`;
+    }
     let monthLabel = this._getMonth(0);
     if (this.months[1]) {
       this.fileName += `_${getMonthIndex(this.months[1])}`;
       monthLabel += `/${this._getMonth(1)}`;
+      this.reference += ` - ${getMonthIndex(this.months[0])}/${this.year} ${getMonthIndex(this.months[1])}/${this.year}`;
+    } else {
+      this.reference += ` - ${getMonthIndex(this.months[0])}/${this.year}`;
     }
 
-    const nationalNumber = storageGet("national-number");
     this.fileName += ".pdf";
-    this.reference = nationalNumber
-      ? `TOB - ${nationalNumber} - ${monthLabel} ${this.year}`
-      : "";
 
     console.log("\nSuccessfully generated:", this.fileName);
     console.log("\nTotal tax amount:", this.total, "EUR\n");
@@ -170,7 +174,7 @@ export class ReportProcessor {
       window.open(
         `mailto:${TARGET_EMAIL}?subject=${
           fullName ? `${fullName} / ` : ""
-        }${subject}`,
+        }${nationalNumber ? `${nationalNumber} / ` : ""}${subject}`,
         "_blank"
       );
     }
