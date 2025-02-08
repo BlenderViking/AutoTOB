@@ -87,6 +87,8 @@ export class ReportProcessor {
   reference = "";
   reportFiles: File[] = [];
   templateFile: File;
+  
+  targetvalues: TaxValues | null = null;
 
   constructor(templateFile: File, reportFiles: Iterable<File>) {
     this.templateFile = templateFile;
@@ -140,7 +142,7 @@ export class ReportProcessor {
 
     this._writeText(new Date().toJSON().slice(0,10).split("-").reverse().join("/"), "date");
 
-    this.fileName = `TOB_2024_${getMonthIndex(this.months[0])}`;
+    this.fileName = `TOB_${this.year}_${getMonthIndex(this.months[0])}`;
     this.reference = '';
     const nationalNumber = storageGet("national-number");
     if (nationalNumber) {
@@ -188,11 +190,9 @@ export class ReportProcessor {
     const buffer = await file.arrayBuffer();
     const document = await pdfJS.getDocument(buffer).promise;
 
-    await Promise.all(
-      [...Array(document.numPages)].map((_, i) =>
-        this._parseReportPage(document, i)
-      )
-    );
+    for(const i of [...Array(document.numPages).keys()]) {
+      await this._parseReportPage(document, i);
+    }
   }
 
   async _parseReportPage(
@@ -222,7 +222,6 @@ export class ReportProcessor {
     }
 
     let onNextValue: ((value: number) => any) | null = null;
-    let targetvalues: TaxValues;
     for (const line of pageContent.items) {
       if (!("str" in line)) {
         continue;
@@ -241,16 +240,20 @@ export class ReportProcessor {
       }
 
       if (R_PAGE_NO_THRESH_12.test(lineContent)) {
-        targetvalues = this.t12Values;
+        this.targetvalues = this.t12Values;
       } else if (R_PAGE_NO_THRESH_35.test(lineContent)) {
-        targetvalues = this.t35Values;
+        this.targetvalues = this.t35Values;
       } else if (R_TRANSACTIONS.test(lineContent)) {
-        onNextValue = (value) => (targetvalues.transactions += value);
+        onNextValue = (value) => {
+          this.targetvalues!.transactions += value;
+        };
       } else if (R_BASIS.test(lineContent)) {
-        onNextValue = (value) => (targetvalues.basis += value);
+        onNextValue = (value) => {
+          this.targetvalues!.basis += value;
+        };
       } else if (R_AMOUNT.test(lineContent)) {
         onNextValue = (value) => {
-          targetvalues.amount += value;
+          this.targetvalues!.amount += value;
           this.total += value;
         };
       }
