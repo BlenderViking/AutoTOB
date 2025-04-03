@@ -2,7 +2,7 @@
   "name": "autotob",
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://arcasias.github.io/AutoTOB/",
+  "homepage": "https://blenderviking.github.io/AutoTOB/",
   "scripts": {
     "dev": "npx vite",
     "build": "npx vite build",
