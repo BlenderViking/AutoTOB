@@ -141,13 +141,12 @@ export class ReportProcessor {
     }
 
     this._writeText(new Date().toJSON().slice(0,10).split("-").reverse().join("/"), "date");
-
-    this.fileName = `TOB_${this.year}_${getMonthIndex(this.months[0])}`;
     this.reference = '';
     const nationalNumber = storageGet("national-number");
     if (nationalNumber) {
       this.reference += `TOB - ${nationalNumber}`;
     }
+    this.fileName = `${nationalNumber} - TOB - ${this.year}_${getMonthIndex(this.months[0])}`;
     let monthLabel = this._getMonth(0);
     if (this.months[1]) {
       this.fileName += `_${getMonthIndex(this.months[1])}`;
